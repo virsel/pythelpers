@@ -164,13 +164,13 @@ def get_logger(name):
     return logger
 
 
-def start_logging(title=None, path2LogsParent='.', log_dir="logs"):
+def start_logging(title=None, descr=None, path2LogsParent='.', log_dir="logs"):
     """Start logging all print outputs to a file with timestamp and optional title"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
     if title:
         # Clean title to be filesystem-friendly
-        clean_title = ''.join(c if c.isalnum() else '_' for c in title)
+        clean_title = ''.join(c if c.isalnum() else '_' for c in title).rstrip('_')
         filename = f"{timestamp}_{clean_title}.log"
     else:
         filename = f"{timestamp}.log"
@@ -183,6 +183,8 @@ def start_logging(title=None, path2LogsParent='.', log_dir="logs"):
     print(f"=== Log started at {timestamp} ===")
     if title:
         print(f"=== {title} ===")
+    if descr:
+        print(f"{descr}")
     print("")
     
     return logger
