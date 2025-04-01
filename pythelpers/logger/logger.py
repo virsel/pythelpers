@@ -11,7 +11,7 @@ class TeeLogger:
     A class that duplicates output to both the terminal and a log file.
     Useful for capturing print statements in scripts and notebooks.
     """
-    def __init__(self, filename, path2LogsParent='.', log_dir="logs"):
+    def __init__(self, filename, logs_dirpath="logs"):
         """
         Initialize the TeeLogger with a filename and optional log directory.
         
@@ -20,11 +20,10 @@ class TeeLogger:
             log_dir (str, optional): Directory to store log files. Defaults to "logs".
         """
         # Create logs directory if it doesn't exist
-        logs_dir = Path(path2LogsParent) / Path(log_dir)
-        logs_dir.mkdir(exist_ok=True)
+        Path(logs_dirpath).mkdir(exist_ok=True)
         
         # Create full path for log file
-        self.log_path = logs_dir / filename
+        self.log_path = logs_dirpath / filename
         self.terminal = sys.stdout
         self.log_file = open(self.log_path, 'w', encoding='utf-8')
         
@@ -47,7 +46,58 @@ class TeeLogger:
 
 
 @contextmanager
-def log_to_file(title=None, log_dir="logs"):
+def file_only_output(logger):
+    """Temporarily redirect output to file only"""
+    original_terminal = logger.terminal
+    logger.terminal = open(os.devnull, 'w')  # Null device
+    try:
+        yield
+    finally:
+        logger.terminal.close()
+        logger.terminal = original_terminal
+
+def _start_logging(title=None, descr=None, logs_dirpath="logs"):
+    """Start logging all print outputs to a file with timestamp and optional title"""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    
+    if title:
+        # Clean title to be filesystem-friendly
+        clean_title = ''.join(c if c.isalnum() else '_' for c in title).rstrip('_')
+        filename = f"{timestamp}_{clean_title}.log"
+    else:
+        filename = f"{timestamp}.log"
+    
+    # Redirect stdout to our custom logger
+    logger = TeeLogger(filename, logs_dirpath)
+    original_stdout = sys.stdout
+    sys.stdout = logger
+    
+    # Print a header in the log
+    print(f"=== Log started at {timestamp} ===")
+    if title:
+        print(f"=== {title} ===")
+    if descr:
+        print(f"{descr}")
+    print("")
+    
+    return logger, original_stdout
+
+def start_logging(title=None, descr=None, logs_dirpath="logs"):
+    """Start logging all print outputs to a file with timestamp and optional title"""
+    logger, _ = _start_logging(title=title, descr=None, logs_dirpath=logs_dirpath)
+    
+    return logger
+
+
+def stop_logging(logger):
+    """Stop logging and restore normal print behavior"""
+    sys.stdout = logger.terminal
+    logger.close()
+    print("Logging stopped")
+
+
+@contextmanager
+def start_logging2(title=None, logs_dirpath="logs"):
     """
     Context manager for logging print statements to a file.
     
@@ -58,22 +108,7 @@ def log_to_file(title=None, log_dir="logs"):
     Yields:
         None: Use this in a with statement
     """
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    
-    if title:
-        clean_title = ''.join(c if c.isalnum() else '_' for c in title)
-        filename = f"{timestamp}_{clean_title}.log"
-    else:
-        filename = f"{timestamp}.log"
-    
-    logger = TeeLogger(filename, log_dir=log_dir)
-    original_stdout = sys.stdout
-    sys.stdout = logger
-    
-    print(f"=== Log started at {timestamp} ===")
-    if title:
-        print(f"=== {title} ===")
-    print("")
+    logger, original_stdout = _start_logging(title=title, descr=None, logs_dirpath=logs_dirpath)
     
     try:
         yield
@@ -84,6 +119,9 @@ def log_to_file(title=None, log_dir="logs"):
         sys.stdout = original_stdout
         logger.close()
         print(f"Logging completed. Log saved to {logger.log_path}")
+
+
+
 
 
 def setup_logger(name, log_file=None, log_level=logging.INFO, log_format=None, 
@@ -162,35 +200,3 @@ def get_logger(name):
         logger.setLevel(logging.INFO)
     
     return logger
-
-
-def start_logging(title=None, descr=None, path2LogsParent='.', log_dir="logs"):
-    """Start logging all print outputs to a file with timestamp and optional title"""
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    
-    if title:
-        # Clean title to be filesystem-friendly
-        clean_title = ''.join(c if c.isalnum() else '_' for c in title).rstrip('_')
-        filename = f"{timestamp}_{clean_title}.log"
-    else:
-        filename = f"{timestamp}.log"
-    
-    # Redirect stdout to our custom logger
-    logger = TeeLogger(filename, path2LogsParent, log_dir)
-    sys.stdout = logger
-    
-    # Print a header in the log
-    print(f"=== Log started at {timestamp} ===")
-    if title:
-        print(f"=== {title} ===")
-    if descr:
-        print(f"{descr}")
-    print("")
-    
-    return logger
-
-def stop_logging(logger):
-    """Stop logging and restore normal print behavior"""
-    sys.stdout = logger.terminal
-    logger.close()
-    print("Logging stopped")
