@@ -1,7 +1,6 @@
 from .logger import (
     setup_logger,
     get_logger,
-    log_to_file,
     TeeLogger,
     start_logging,
     stop_logging
@@ -10,7 +9,6 @@ from .logger import (
 __all__ = [
     "setup_logger",
     "get_logger",
-    "log_to_file",
     "TeeLogger",
     "start_logging",
     "stop_logging"

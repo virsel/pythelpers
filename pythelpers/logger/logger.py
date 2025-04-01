@@ -55,6 +55,7 @@ def file_only_output(logger):
     finally:
         logger.terminal.close()
         logger.terminal = original_terminal
+        
 
 def _start_logging(title=None, descr=None, logs_dirpath="logs"):
     """Start logging all print outputs to a file with timestamp and optional title"""
