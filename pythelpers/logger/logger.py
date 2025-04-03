@@ -23,7 +23,7 @@ class TeeLogger:
         Path(logs_dirpath).mkdir(exist_ok=True)
         
         # Create full path for log file
-        self.log_path = logs_dirpath / filename
+        self.log_path = str(Path(logs_dirpath) / filename)
         self.terminal = sys.stdout
         self.log_file = open(self.log_path, 'w', encoding='utf-8')
         
@@ -98,7 +98,7 @@ def stop_logging(logger):
 
 
 @contextmanager
-def start_logging2(title=None, logs_dirpath="logs"):
+def start_logging2(title=None, descr=None, logs_dirpath="logs"):
     """
     Context manager for logging print statements to a file.
     
@@ -109,7 +109,7 @@ def start_logging2(title=None, logs_dirpath="logs"):
     Yields:
         None: Use this in a with statement
     """
-    logger, original_stdout = _start_logging(title=title, descr=None, logs_dirpath=logs_dirpath)
+    logger, original_stdout = _start_logging(title=title, descr=descr, logs_dirpath=logs_dirpath)
     
     try:
         yield
