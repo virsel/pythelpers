@@ -45,7 +45,7 @@ class TensorLogger:
         self.writer.add_text('Version Description', txt, step)
         self.writer.flush()
         
-    def log_ud(self, model, step, lr=None):
+    def log_ud(self, model, step, model_prefix="", lr=None):
         # Get the current learning rate
         if lr is None:
             lr = model.optimizers().param_groups[0]['lr']
@@ -60,7 +60,7 @@ class TensorLogger:
                 # Calculate the Update Discrepancy (ud) metric and take the log10
                 metric = (grad_std / param_std).log10().item()
                 # Create a formatted name that corresponds to the naming convention in the TensorBoard layout
-                formatted_name = 'z_ud_' + name.replace('.', '_')
+                formatted_name = f"{model_prefix}{'_' if len(model_prefix) >0 else ''}z_ud_" + name.replace('.', '_')
                 # Log the metric using the formatted name
                 self.log_metric(metric, step, formatted_name)
                 
